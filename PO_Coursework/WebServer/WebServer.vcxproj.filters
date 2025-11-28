@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PO_Coursework.cpp">
+    <ClCompile Include="WebServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

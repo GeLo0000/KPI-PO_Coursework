@@ -1,4 +1,4 @@
-// PO_Coursework.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// WebServer.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include <iostream>

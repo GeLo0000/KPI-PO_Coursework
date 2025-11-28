@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{4086a8e0-93a4-4c2c-983a-ed8ff4270085}</ProjectGuid>
-    <RootNamespace>POCoursework</RootNamespace>
+    <ProjectGuid>{9760642e-3ff0-4834-95fd-86d1bf154958}</ProjectGuid>
+    <RootNamespace>WebServer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="PO_Coursework.cpp" />
+    <ClCompile Include="WebServer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
