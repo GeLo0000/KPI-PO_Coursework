@@ -10,23 +10,19 @@
 // Link with Ws2_32.lib
 #pragma comment(lib, "ws2_32.lib")
 
-/// @brief Main server class handling incoming TCP connections.
+// Main server class handling incoming TCP connections.
 class WebServer {
 public:
-    /// @brief Constructs the WebServer.
-    /// @param port Port to listen on.
-    /// @param idx Reference to the InvertedIndex.
-    /// @param c_pool Thread pool for handling clients.
-    /// @param i_pool Thread pool for indexing tasks (used for stats).
+    // Constructs the WebServer.
     WebServer(int port, InvertedIndex& idx, ThreadPool& c_pool, ThreadPool& i_pool);
 
-    /// @brief Destructor. Stops the server.
+    // Destructor. Stops the server.
     ~WebServer();
 
-    /// @brief Starts listening for connections. Blocking call.
+    // Starts listening for connections. Blocking call.
     void Start();
 
-    /// @brief Stops the server and closes the socket.
+    // Stops the server and closes the socket.
     void Stop();
 
 private:

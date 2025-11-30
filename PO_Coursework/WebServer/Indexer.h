@@ -8,33 +8,27 @@
 #include "InvertedIndex.h"
 #include "ThreadPool.h"
 
-/// @brief background service that monitors a directory and indexes new files.
+// Background service that monitors a directory and indexes new files.
 class Indexer {
 public:
-    /// @brief Constructs the Indexer.
-    /// @param idx Reference to the InvertedIndex to populate.
-    /// @param tp Reference to the ThreadPool for executing tasks.
-    /// @param path Path to the directory to monitor.
+    // Constructs the Indexer.
     Indexer(InvertedIndex& idx, ThreadPool& tp, const std::string& path);
 
-    /// @brief Destructor. Stops the background thread if running.
+    // Destructor. Stops the background thread if running.
     ~Indexer();
 
-    /// @brief Starts the background monitoring thread.
-    /// Non-blocking.
+    // Starts the background monitoring thread.
     void Start();
 
-    /// @brief Stops the background monitoring thread.
+    // Stops the background monitoring thread.
     void Stop();
 
 private:
-    /// @brief The main loop running in the background thread.
-    /// Checks for new files periodically.
+    // The main loop running in the background thread.
+    // Checks for new files periodically.
     void IndexingLoop();
 
-    /// @brief Reads and parses a single file, adding words to the index.
-    /// @param filepath Full path to the file.
-    /// @param filename Name of the file (used as ID in index).
+    // Reads and parses a single file, adding words to the index.
     void ProcessFile(const std::string& filepath, const std::string& filename);
 
     // Dependencies

@@ -8,22 +8,19 @@
 #include <functional>
 #include <atomic>
 
-/// @brief Manages a fixed number of worker threads to execute tasks concurrently.
+// Manages a fixed number of worker threads to execute tasks concurrently.
 class ThreadPool {
 public:
-    /// @brief Constructs the thread pool and spins up worker threads.
-    /// @param num_threads The number of worker threads to create.
+    // Constructs the thread pool and spins up worker threads.
     explicit ThreadPool(size_t num_threads);
 
-    /// @brief Destructor. Stops all threads and joins them.
+    // Destructor. Stops all threads and joins them.
     ~ThreadPool();
 
-    /// @brief Adds a new void() task to the queue.
-    /// @param task The function to execute.
+    // Adds a new void() task to the queue.
     void Enqueue(std::function<void()> task);
 
-    /// @brief Returns the current number of pending tasks.
-    /// @return Number of tasks in the queue.
+    // Returns the current number of pending tasks.
     size_t GetQueueSize();
 
 private:

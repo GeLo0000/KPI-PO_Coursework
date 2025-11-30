@@ -8,11 +8,7 @@
 // Link with Ws2_32.lib
 #pragma comment(lib, "ws2_32.lib")
 
-/// @brief Helper function to ensure all bytes are received.
-/// @param socket The socket to read from.
-/// @param buffer Buffer to store data.
-/// @param length Number of bytes to read.
-/// @return true on success, false on failure.
+// Helper function to ensure all bytes are received.
 bool RecvAll(SOCKET socket, char* buffer, int length) {
     int total_received = 0;
     while (total_received < length) {
