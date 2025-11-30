@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Пошукова Система</title>
+    <style>
+        /* Це CSS - стиль сторінки (щоб було красиво) */
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex-grow: 1; padding: 10px; font-size: 16px; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #results { border-top: 1px solid #ccc; padding-top: 20px; }
+        .file-item { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>🔍 Курсова Пошукова Система</h1>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Введіть слово для пошуку...">
+        <button onclick="performSearch()">Знайти</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Це JavaScript - мозок сторінки в браузері.
+        // Він відправить запит на Python, не перезавантажуючи сторінку.
+
+        async function performSearch() {
+            // 1. Беремо текст з поля вводу
+            const word = document.getElementById('searchInput').value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!word) {
+                alert("Введіть слово!");
+                return;
+            }
+
+            resultsDiv.innerHTML = "Wait... Searching...";
+
+            try {
+                // 2. Стукаємо до нашого Python-посередника (/search?word=...)
+                const response = await fetch(`/search?word=${encodeURIComponent(word)}`);
+                
+                // 3. Отримуємо відповідь у форматі JSON (список файлів)
+                const data = await response.json();
+
+                // 4. Очищаємо екран і показуємо нові результати
+                resultsDiv.innerHTML = "";
+                
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p style="color:red">Помилка: ${data.error}</p>`;
+                } else if (data.files.length === 0) {
+                    resultsDiv.innerHTML = "<p>Нічого не знайдено 😔</p>";
+                } else {
+                    // Проходимось по кожному файлу і додаємо його на сторінку
+                    resultsDiv.innerHTML = `<h3>Знайдено у ${data.files.length} файлах:</h3>`;
+                    data.files.forEach(filename => {
+                        const div = document.createElement('div');
+                        div.className = 'file-item';
+                        div.textContent = "📄 " + filename;
+                        resultsDiv.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                resultsDiv.innerHTML = "Помилка з'єднання з Python сервером.";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
