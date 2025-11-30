@@ -27,7 +27,7 @@ int main() {
     // 3. Запуск індексації (використовує indexingPool)
     // Indexer швидко закине задачі в indexingPool і поверне керування
     Indexer indexer(index, indexingPool, "data");
-    indexer.run();
+    indexer.start();
 
     // 4. Запуск сервера (використовує clientPool)
     // Server буде кидати нових клієнтів у clientPool, який вільний!
