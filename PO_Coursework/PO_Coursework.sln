@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WebServer", "WebServer\WebS
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client_CPP", "Client_CPP\Client_CPP.vcxproj", "{D5C8B98E-3645-4B4C-9A06-56E79E0D2C61}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Client_PY", "Client_PY\Client_PY.pyproj", "{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,12 +41,6 @@ Global
 		{D5C8B98E-3645-4B4C-9A06-56E79E0D2C61}.Release|x64.Build.0 = Release|x64
 		{D5C8B98E-3645-4B4C-9A06-56E79E0D2C61}.Release|x86.ActiveCfg = Release|Win32
 		{D5C8B98E-3645-4B4C-9A06-56E79E0D2C61}.Release|x86.Build.0 = Release|Win32
-		{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}.Release|x64.ActiveCfg = Release|Any CPU
-		{2688D7AF-A2BE-4863-A9B0-D7997210A1A7}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
