@@ -2,103 +2,104 @@ import socket
 import struct
 from flask import Flask, render_template, request, jsonify
 
-# Створюємо додаток Flask
 app = Flask(__name__)
 
-# Налаштування підключення до C++ (Кухня)
+# Server Configuration
 CPP_HOST = '127.0.0.1'
 CPP_PORT = 8080
-CMD_SEARCH = 0x01
 
-# --- Функція-клієнт (Та сама, що була в Client_PY, але тепер як функція) ---
+# Protocol Constants (Must match Protocol.h in C++)
+COMMAND_SEARCH = 0x01
+RESPONSE_OK = 0x01
+RESPONSE_EMPTY = 0x02
+RESPONSE_ERROR = 0x03
+
 def query_cpp_server(word):
     """
-    Ця функція працює як офіціант:
-    1. Біжить до C++.
-    2. Віддає слово.
-    3. Приносить список файлів.
+    Connects to the C++ server via TCP socket, sends the search query,
+    and parses the binary response.
+    
+    Args:
+        word (str): The keyword to search for.
+        
+    Returns:
+        dict: A dictionary containing either a list of files or an error message.
     """
     try:
-        # Відкриваємо "двері" (сокет) до C++ сервера
+        # Create TCP socket
+        # FIX: Removed the extra .socket in the second argument
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(2.0) # Чекаємо максимум 2 секунди, щоб не зависнути
+            s.settimeout(2.0) # Timeout to prevent hanging
             s.connect((CPP_HOST, CPP_PORT))
 
-            # --- ПІДГОТОВКА ЗАМОВЛЕННЯ ---
+            # --- Send Request ---
             word_bytes = word.encode('utf-8')
-            # Пакуємо: Команда (1 байт) + Довжина (4 байти) + Слово
-            header = struct.pack('<Bi', CMD_SEARCH, len(word_bytes))
+            # Pack: Command (1 byte) + Length (4 bytes)
+            header = struct.pack('<Bi', COMMAND_SEARCH, len(word_bytes))
             
-            # Відправляємо
             s.sendall(header)
             s.sendall(word_bytes)
 
-            # --- ОТРИМАННЯ СТРАВИ (Відповіді) ---
+            # --- Receive Response ---
             
-            # 1. Читаємо статус (OK, EMPTY або ERROR)
+            # 1. Read Status (1 byte)
             status_data = s.recv(1)
             if not status_data:
-                return {"error": "C++ сервер розірвав з'єднання"}
+                return {"error": "Connection closed by C++ server"}
             
             status = struct.unpack('<B', status_data)[0]
 
-            if status == 0x02: # RESP_EMPTY
-                return {"files": []} # Повертаємо пустий список
+            if status == RESPONSE_EMPTY:
+                return {"files": []}
             
-            if status == 0x03: # RESP_ERROR
-                return {"error": "C++ сервер повернув помилку"}
+            if status == RESPONSE_ERROR:
+                return {"error": "Server returned an error status"}
 
-            if status == 0x01: # RESP_OK
-                # 2. Читаємо кількість файлів
+            if status == RESPONSE_OK:
+                # 2. Read File Count (4 bytes)
                 count_data = s.recv(4)
                 count = struct.unpack('<i', count_data)[0]
                 
                 found_files = []
                 
-                # 3. Читаємо назви файлів одну за одною
+                # 3. Read Filenames loop
                 for _ in range(count):
-                    # Довжина назви
+                    # Read name length
                     len_data = s.recv(4)
                     name_len = struct.unpack('<i', len_data)[0]
                     
-                    # Сама назва
+                    # Read name string
                     name_bytes = s.recv(name_len)
                     filename = name_bytes.decode('utf-8')
                     found_files.append(filename)
                 
                 return {"files": found_files}
             
-            return {"error": "Невідомий статус від сервера"}
+            return {"error": "Unknown response status"}
 
     except ConnectionRefusedError:
-        return {"error": "Не можу підключитись до C++. Сервер запущено?"}
+        return {"error": "Could not connect to C++ server. Is it running?"}
     except Exception as e:
         return {"error": str(e)}
 
-# --- Маршрути веб-сайту ---
+# --- Web Routes ---
 
-# Головна сторінка (http://localhost:5000/)
 @app.route('/')
 def index():
-    # Ця функція просто показує наш HTML файл
+    """Renders the main search page."""
     return render_template('index.html')
 
-# API для пошуку (http://localhost:5000/search?word=fox)
 @app.route('/search')
 def search():
-    # 1. Офіціант чує, що хоче клієнт (бере слово з адреси)
+    """API Endpoint to handle search requests from the frontend."""
     word = request.args.get('word', '')
     
     if not word:
-        return jsonify({"error": "Пустий запит"})
+        return jsonify({"error": "Empty query"})
 
-    # 2. Офіціант біжить на кухню (викликаємо функцію сокетів)
     result = query_cpp_server(word)
-
-    # 3. Віддає результат у форматі JSON (зрозумілому для JavaScript)
     return jsonify(result)
 
-# Запуск веб-сервера
 if __name__ == '__main__':
-    print("Запускаю веб-сайт на http://127.0.0.1:5000")
+    print(f"Starting Web Client on http://127.0.0.1:5000")
     app.run(debug=True, port=5000)

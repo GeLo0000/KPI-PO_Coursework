@@ -1,36 +1,33 @@
-// Protocol.h
 #pragma once
-#include <cstdint> // Для типів фіксованого розміру (uint8_t, uint32_t)
 
-// --- Константи типів повідомлень (1 байт) ---
+#include <cstdint>
 
-// Запити клієнта
-const uint8_t CMD_SEARCH = 0x01;
+// --- Message Type Constants (1 byte) ---
 
-// Відповіді сервера
-const uint8_t RESP_OK = 0x01;
-const uint8_t RESP_EMPTY = 0x02;
-const uint8_t RESP_ERROR = 0x03;
+// Client Requests
+constexpr uint8_t kCmdSearch = 0x01;
 
-// --- Структури пакетів (Логічний опис) ---
+// Server Responses
+constexpr uint8_t kRespOk = 0x01;
+constexpr uint8_t kRespEmpty = 0x02;
+constexpr uint8_t kRespError = 0x03;
 
 /*
-СЦЕНАРІЙ ПОШУКУ:
+PROTOCOL DESCRIPTION:
 
-1. Клієнт надсилає ЗАПИТ (Request):
-   [1 байт  ] Command  (CMD_SEARCH)
-   [4 байти ] Length   (Довжина слова у байтах)
-   [N байтів] Word     (Сам текст слова, без \0 в кінці)
+1. Client Request (SEARCH):
+   [1 byte ] Command  (kCmdSearch)
+   [4 bytes] Length   (Length of the word in bytes)
+   [N bytes] Word     (The word text, no null terminator)
 
-   Приклад для слова "fox":
+   Example for "fox":
    [0x01] [0x00, 0x00, 0x00, 0x03] ['f', 'o', 'x']
 
-2. Сервер надсилає ВІДПОВІДЬ (Response):
-   [1 байт  ] Status   (RESP_OK або RESP_EMPTY)
-   [4 байти ] Count    (Кількість знайдених файлів)
+2. Server Response:
+   [1 byte ] Status   (kRespOk or kRespEmpty)
+   [4 bytes] Count    (Number of files found)
 
-   ... Далі йде список файлів. Для кожного файлу: ...
-   [4 байти ] NameLen  (Довжина назви файлу)
-   [N байтів] Name     (Назва файлу)
-
+   ... List of files follows. For each file: ...
+   [4 bytes] NameLen  (Length of the filename)
+   [N bytes] Name     (Filename)
 */

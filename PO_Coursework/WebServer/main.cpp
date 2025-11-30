@@ -1,46 +1,37 @@
-// main.cpp
 #include <iostream>
-#include <string>
 #include "InvertedIndex.h"
 #include "ThreadPool.h"
 #include "Indexer.h"
 #include "WebServer.h"
 
 int main() {
-    // 1. Створюємо інвертований індекс (спільний ресурс)
+    // 1. Initialize shared resources
     InvertedIndex index;
 
-    // 2. Створюємо ДВА окремі пули потоків
+    // 2. Create Thread Pools
 
-    // Пул для індексації: нехай працює на 4 ядрах (важка робота)
-    ThreadPool indexingPool(20);
+    // Pool for heavy indexing tasks
+    size_t indexing_threads = 20;
+    ThreadPool indexing_pool(indexing_threads);
 
-    // Пул для клієнтів: вистачить 2-х потоків (вони працюють швидко)
-    // Це гарантує, що для клієнтів ЗАВЖДИ є вільні руки, 
-    // незалежно від того, скільки файлів ми зараз читаємо.
-    ThreadPool clientPool(2);
+    // Pool for quick client responses
+    size_t client_threads = 2;
+    ThreadPool client_pool(client_threads);
 
     std::cout << "System initialized:\n";
-    std::cout << "- Indexing Pool: 4 threads\n";
-    std::cout << "- Client Pool:   2 threads\n";
+    std::cout << "- Indexing Pool: " << indexing_threads << " threads\n";
+    std::cout << "- Client Pool:   " << client_threads << " threads\n";
 
-    // 3. Запуск індексації (використовує indexingPool)
-    // Indexer швидко закине задачі в indexingPool і поверне керування
-    Indexer indexer(index, indexingPool, "data");
-    indexer.start();
+    // 3. Start Background Indexer (non-blocking)
+    Indexer indexer(index, indexing_pool, "data");
+    indexer.Start();
 
-    // 4. Запуск сервера (використовує clientPool)
-    // Server буде кидати нових клієнтів у clientPool, який вільний!
-    // Передаємо indexingPool четвертим аргументом
-    WebServer server(8080, index, clientPool, indexingPool);
-    server.start();
+    // 4. Start Web Server (blocking)
+    WebServer server(8080, index, client_pool, indexing_pool);
+    server.Start();
 
-    // Цей метод запускає listen і цикл accept, але accept блокуючий,
-    // тому server.start() у нас зараз зроблений так, що він блокує main.
-    // АЛЕ! У нас у WebServer.cpp метод start() містить while(isRunning).
-    // Це означає, що програма "зависне" всередині server.start().
-    // Це нормально, адже indexer вже працює у фоні (в indexingPool).
-    server.start();
+    // The program will reach here only when the server stops
+    indexer.Stop();
 
     return 0;
 }

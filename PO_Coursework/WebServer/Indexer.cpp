@@ -1,68 +1,68 @@
-// Indexer.cpp
 #include "Indexer.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <chrono> // Для сну (sleep)
+#include <chrono>
 
 namespace fs = std::filesystem;
 
 Indexer::Indexer(InvertedIndex& idx, ThreadPool& tp, const std::string& path)
-    : index(idx), pool(tp), directoryPath(path), running(false) {
+    : index_(idx), pool_(tp), directory_path_(path), running_(false) {
 }
 
 Indexer::~Indexer() {
-    stop();
+    Stop();
 }
 
-void Indexer::start() {
-    if (running) return; // Вже запущено
-    running = true;
+void Indexer::Start() {
+    if (running_) {
+        return;
+    }
+    running_ = true;
 
-    // Запускаємо indexingLoop в окремому потоці
-    schedulerThread = std::thread(&Indexer::indexingLoop, this);
+    // Start the background loop in a separate thread
+    scheduler_thread_ = std::thread(&Indexer::IndexingLoop, this);
 
-    std::cout << "[SCHEDULER] Started monitoring directory: " << directoryPath << "\n";
+    std::cout << "[SCHEDULER] Started monitoring directory: " << directory_path_ << "\n";
 }
 
-void Indexer::stop() {
-    running = false;
-    if (schedulerThread.joinable()) {
-        schedulerThread.join();
+void Indexer::Stop() {
+    running_ = false;
+    if (scheduler_thread_.joinable()) {
+        scheduler_thread_.join();
     }
 }
 
-void Indexer::indexingLoop() {
-    while (running) {
+void Indexer::IndexingLoop() {
+    while (running_) {
         try {
-            bool foundNew = false;
+            bool found_new = false;
 
-            // Проходимось по папці
-            for (const auto& entry : fs::directory_iterator(directoryPath)) {
+            // Iterate over the directory
+            for (const auto& entry : fs::directory_iterator(directory_path_)) {
                 if (entry.is_regular_file()) {
                     std::string filename = entry.path().filename().string();
 
-                    // Перевіряємо, чи бачили ми вже цей файл
-                    // count повертає 1 якщо є, 0 якщо немає
-                    if (seenFiles.count(filename) == 0) {
+                    // Check if we have already seen this file
+                    if (seen_files_.count(filename) == 0) {
+                        // New file found!
+                        seen_files_.insert(filename);
 
-                        // НОВИЙ ФАЙЛ!
-                        // 1. Запам'ятовуємо його
-                        seenFiles.insert(filename);
-
-                        // 2. Відправляємо в пул
+                        // Submit task to thread pool
                         std::string path = entry.path().string();
-                        pool.enqueue([this, path, filename]() {
-                            this->processFile(path, filename);
+
+                        // Note: We use Enqueue instead of enqueue
+                        pool_.Enqueue([this, path, filename]() {
+                            this->ProcessFile(path, filename);
                             });
 
                         std::cout << "[SCHEDULER] Found new file: " << filename << "\n";
-                        foundNew = true;
+                        found_new = true;
                     }
                 }
             }
 
-            if (foundNew) {
+            if (found_new) {
                 std::cout << "[SCHEDULER] New tasks submitted to ThreadPool.\n";
             }
 
@@ -71,25 +71,27 @@ void Indexer::indexingLoop() {
             std::cerr << "Indexer Error: " << e.what() << std::endl;
         }
 
-        // Спимо 5 секунд перед наступною перевіркою
-        // (використовуємо цикл з коротким сном, щоб швидше зреагувати на stop())
+        // Sleep for 5 seconds, checking running_ flag frequently for quick shutdown
         for (int i = 0; i < 50; ++i) {
-            if (!running) break;
+            if (!running_) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
 
-void Indexer::processFile(const std::string& filepath, const std::string& filename) {
+void Indexer::ProcessFile(const std::string& filepath, const std::string& filename) {
     std::ifstream file(filepath);
     if (!file.is_open()) return;
 
     std::string word;
     while (file >> word) {
-        std::string processed = InvertedIndex::cleanWord(word);
+        // Use static method CleanWord (PascalCase)
+        std::string processed = InvertedIndex::CleanWord(word);
         if (!processed.empty()) {
-            index.add(processed, filename);
+            // Use Add (PascalCase)
+            index_.Add(processed, filename);
         }
     }
-    index.incrementFileCount();
+    // Update stats
+    index_.IncrementFileCount();
 }

@@ -3,14 +3,32 @@
 #include <ws2tcpip.h>
 #include <string>
 #include <vector>
-#include "Protocol.h"
+#include "Protocol.h" // Update path to your Protocol.h
 
+// Link with Ws2_32.lib
 #pragma comment(lib, "ws2_32.lib")
 
+/// @brief Helper function to ensure all bytes are received.
+/// @param socket The socket to read from.
+/// @param buffer Buffer to store data.
+/// @param length Number of bytes to read.
+/// @return true on success, false on failure.
+bool RecvAll(SOCKET socket, char* buffer, int length) {
+    int total_received = 0;
+    while (total_received < length) {
+        int bytes = recv(socket, buffer + total_received, length - total_received, 0);
+        if (bytes <= 0) {
+            return false;
+        }
+        total_received += bytes;
+    }
+    return true;
+}
+
 int main() {
-    // 1. Ініціалізація Winsock (один раз на старті)
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    // 1. Initialize Winsock
+    WSADATA wsa_data;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
         std::cerr << "WSAStartup failed.\n";
         return 1;
     }
@@ -24,72 +42,66 @@ int main() {
 
         if (word == "exit") break;
 
-        // ==========================================
-        // КРОК 1: Створення з'єднання (ДЛЯ КОЖНОГО ЗАПИТУ)
-        // ==========================================
-        SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (clientSocket == INVALID_SOCKET) {
+        // 2. Create Socket
+        SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
+        if (client_socket == INVALID_SOCKET) {
             std::cerr << "Socket creation failed.\n";
             break;
         }
 
-        sockaddr_in serverAddr;
-        serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(8080);
-        inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
+        // 3. Connect to Server
+        sockaddr_in server_addr;
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(8080);
+        inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
-        if (connect(clientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        if (connect(client_socket, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
             std::cerr << "Error: Could not connect to server. Is it running?\n";
-            closesocket(clientSocket);
-            // Не виходимо, даємо шанс спробувати ще раз
-            continue;
+            closesocket(client_socket);
+            continue; // Try again next loop
         }
 
-        // ==========================================
-        // КРОК 2: Відправка запиту
-        // ==========================================
+        // 4. Send Request
 
-        // 1. Команда
-        uint8_t cmd = CMD_SEARCH;
-        send(clientSocket, (char*)&cmd, sizeof(cmd), 0);
+        // Command (1 byte)
+        uint8_t cmd = kCmdSearch;
+        send(client_socket, (char*)&cmd, sizeof(cmd), 0);
 
-        // 2. Довжина слова
-        int len = word.length();
-        send(clientSocket, (char*)&len, sizeof(len), 0);
+        // Length (4 bytes)
+        int len = static_cast<int>(word.length());
+        send(client_socket, (char*)&len, sizeof(len), 0);
 
-        // 3. Саме слово
-        send(clientSocket, word.c_str(), len, 0);
+        // Word (N bytes)
+        send(client_socket, word.c_str(), len, 0);
 
-        // ==========================================
-        // КРОК 3: Отримання відповіді
-        // ==========================================
+        // 5. Receive Response
 
+        // Status (1 byte)
         uint8_t status;
-        int bytesReceived = recv(clientSocket, (char*)&status, sizeof(status), 0);
+        if (RecvAll(client_socket, (char*)&status, sizeof(status))) {
 
-        if (bytesReceived > 0) {
-            if (status == RESP_OK) {
+            if (status == kRespOk) {
                 int count;
-                recv(clientSocket, (char*)&count, sizeof(count), 0);
+                RecvAll(client_socket, (char*)&count, sizeof(count));
 
                 std::cout << ">>> Found in " << count << " files:\n";
 
                 for (int i = 0; i < count; ++i) {
-                    int nameLen;
-                    recv(clientSocket, (char*)&nameLen, sizeof(nameLen), 0);
+                    int name_len;
+                    RecvAll(client_socket, (char*)&name_len, sizeof(name_len));
 
-                    std::vector<char> buffer(nameLen + 1);
-                    recv(clientSocket, buffer.data(), nameLen, 0);
-                    buffer[nameLen] = '\0';
+                    std::vector<char> buffer(name_len + 1);
+                    RecvAll(client_socket, buffer.data(), name_len);
+                    buffer[name_len] = '\0';
 
                     std::cout << "    [" << (i + 1) << "] " << buffer.data() << "\n";
                 }
             }
-            else if (status == RESP_EMPTY) {
+            else if (status == kRespEmpty) {
                 std::cout << ">>> Word NOT found.\n";
-                // Вичитуємо пустий лічильник, щоб очистити сокет (протокол вимагає)
+                // Read dummy counter to clear socket buffer
                 int dummy;
-                recv(clientSocket, (char*)&dummy, sizeof(dummy), 0);
+                RecvAll(client_socket, (char*)&dummy, sizeof(dummy));
             }
             else {
                 std::cout << ">>> Server Error.\n";
@@ -99,13 +111,12 @@ int main() {
             std::cout << "Error receiving data or connection closed.\n";
         }
 
-        // Закриваємо сокет після кожного запиту, бо сервер так налаштований
-        closesocket(clientSocket);
+        // Close socket after each request
+        closesocket(client_socket);
     }
 
     WSACleanup();
 
-    // Ця команда не дасть вікну закритися
     std::cout << "\nProgram finished. Press any key to exit...";
     system("pause");
 

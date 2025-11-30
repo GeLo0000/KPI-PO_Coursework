@@ -1,79 +1,77 @@
-// WebServer.cpp
 #include "WebServer.h"
 #include "ClientHandler.h"
 
-WebServer::WebServer(int port, InvertedIndex& idx, ThreadPool& cPool, ThreadPool& iPool)
-    : port(port), index(idx), clientPool(cPool), indexingPool(iPool), isRunning(false), serverSocket(INVALID_SOCKET) {}
-
-WebServer::~WebServer() {
-    stop();
+WebServer::WebServer(int port, InvertedIndex& idx, ThreadPool& c_pool, ThreadPool& i_pool)
+    : port_(port), index_(idx), client_pool_(c_pool), indexing_pool_(i_pool),
+    is_running_(false), server_socket_(INVALID_SOCKET) {
 }
 
-void WebServer::start() {
-    // 1. Ініціалізація Winsock
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+WebServer::~WebServer() {
+    Stop();
+}
+
+void WebServer::Start() {
+    // 1. Initialize Winsock
+    WSADATA wsa_data;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
         std::cerr << "WSAStartup failed.\n";
         return;
     }
 
-    // 2. Створення сокета
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == INVALID_SOCKET) {
+    // 2. Create Socket
+    server_socket_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket_ == INVALID_SOCKET) {
         std::cerr << "Socket creation failed.\n";
         WSACleanup();
         return;
     }
 
-    // 3. Налаштування адреси (IP та Порт)
-    sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY; // Слухаємо на всіх інтерфейсах
-    serverAddr.sin_port = htons(port);       // Порт (htons перетворює число в мережевий формат)
+    // 3. Bind
+    sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(port_);
 
-    // 4. Прив'язка (Bind)
-    if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+    if (bind(server_socket_, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
         std::cerr << "Bind failed.\n";
-        closesocket(serverSocket);
+        closesocket(server_socket_);
         WSACleanup();
         return;
     }
 
-    // 5. Прослуховування (Listen)
-    if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
+    // 4. Listen
+    if (listen(server_socket_, SOMAXCONN) == SOCKET_ERROR) {
         std::cerr << "Listen failed.\n";
-        closesocket(serverSocket);
+        closesocket(server_socket_);
         WSACleanup();
         return;
     }
 
-    isRunning = true;
-    std::cout << "Server started on port " << port << ". Waiting for connections...\n";
+    is_running_ = true;
+    std::cout << "Server started on port " << port_ << ". Waiting for connections...\n";
 
-    // 6. Головний цикл прийому клієнтів
-    while (isRunning) {
-        SOCKET clientSocket = accept(serverSocket, NULL, NULL);
-        if (clientSocket == INVALID_SOCKET) {
-            if (isRunning) std::cerr << "Accept failed.\n";
+    // 5. Accept Loop
+    while (is_running_) {
+        SOCKET client_socket = accept(server_socket_, NULL, NULL);
+        if (client_socket == INVALID_SOCKET) {
+            if (is_running_) std::cerr << "Accept failed.\n";
             continue;
         }
 
         std::cout << "[SERVER] >> New client connected.\n";
 
-        // Клієнт підключився!
-        // Передаємо обробку клієнта в Пул Потоків
-        clientPool.enqueue([this, clientSocket]() {
-            // Передаємо indexingPool всередину хендлера
-            ClientHandler handler(clientSocket, this->index, this->indexingPool);
-            handler.handle();
+        // Dispatch to client thread pool
+        client_pool_.Enqueue([this, client_socket]() {
+            ClientHandler handler(client_socket, this->index_, this->indexing_pool_);
+            handler.Handle();
             });
     }
 }
 
-void WebServer::stop() {
-    isRunning = false;
-    if (serverSocket != INVALID_SOCKET) {
-        closesocket(serverSocket);
+void WebServer::Stop() {
+    is_running_ = false;
+    if (server_socket_ != INVALID_SOCKET) {
+        closesocket(server_socket_);
     }
     WSACleanup();
 }
