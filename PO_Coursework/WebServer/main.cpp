@@ -31,7 +31,9 @@ int main() {
 
     // 4. Запуск сервера (використовує clientPool)
     // Server буде кидати нових клієнтів у clientPool, який вільний!
-    WebServer server(8080, index, clientPool);
+    // Передаємо indexingPool четвертим аргументом
+    WebServer server(8080, index, clientPool, indexingPool);
+    server.start();
 
     // Цей метод запускає listen і цикл accept, але accept блокуючий,
     // тому server.start() у нас зараз зроблений так, що він блокує main.

@@ -2,9 +2,8 @@
 #include "WebServer.h"
 #include "ClientHandler.h"
 
-WebServer::WebServer(int port, InvertedIndex& idx, ThreadPool& tp)
-    : port(port), index(idx), pool(tp), isRunning(false), serverSocket(INVALID_SOCKET) {
-}
+WebServer::WebServer(int port, InvertedIndex& idx, ThreadPool& cPool, ThreadPool& iPool)
+    : port(port), index(idx), clientPool(cPool), indexingPool(iPool), isRunning(false), serverSocket(INVALID_SOCKET) {}
 
 WebServer::~WebServer() {
     stop();
@@ -59,10 +58,13 @@ void WebServer::start() {
             continue;
         }
 
+        std::cout << "[SERVER] >> New client connected.\n";
+
         // Клієнт підключився!
         // Передаємо обробку клієнта в Пул Потоків
-        pool.enqueue([this, clientSocket]() {
-            ClientHandler handler(clientSocket, this->index);
+        clientPool.enqueue([this, clientSocket]() {
+            // Передаємо indexingPool всередину хендлера
+            ClientHandler handler(clientSocket, this->index, this->indexingPool);
             handler.handle();
             });
     }

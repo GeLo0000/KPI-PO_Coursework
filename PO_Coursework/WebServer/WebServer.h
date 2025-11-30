@@ -13,12 +13,13 @@ class WebServer {
 private:
     int port;
     InvertedIndex& index;
-    ThreadPool& pool;
+    ThreadPool& clientPool;   // Пул для клієнтів
+    ThreadPool& indexingPool; // Пул для файлів (зберігаємо посилання для статистики)
     bool isRunning;
     SOCKET serverSocket; // Змінна для сокета
 
 public:
-    WebServer(int port, InvertedIndex& idx, ThreadPool& tp);
+    WebServer(int port, InvertedIndex& idx, ThreadPool& cPool, ThreadPool& iPool);
     ~WebServer(); // Деструктор для закриття сокета
     void start();
     void stop();

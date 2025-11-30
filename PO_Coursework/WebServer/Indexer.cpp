@@ -10,6 +10,7 @@ Indexer::Indexer(InvertedIndex& idx, ThreadPool& tp, const std::string& path)
     : index(idx), pool(tp), directoryPath(path) {
 }
 
+// Indexer.cpp (метод processFile)
 void Indexer::processFile(const std::string& filepath, const std::string& filename) {
     std::ifstream file(filepath);
     if (!file.is_open()) return;
@@ -21,6 +22,10 @@ void Indexer::processFile(const std::string& filepath, const std::string& filena
             index.add(processed, filename);
         }
     }
+
+    // НОВЕ: Коли цикл закінчився, значить файл повністю в індексі.
+    // Тільки тепер збільшуємо лічильник.
+    index.incrementFileCount();
 }
 
 void Indexer::run() {

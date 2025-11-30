@@ -1,20 +1,21 @@
+// ClientHandler.h
 #pragma once
 #include <winsock2.h>
-#include <vector>
-#include <string>
 #include "InvertedIndex.h"
-#include "Protocol.h" // Наш протокол
+#include "Protocol.h"
+#include "ThreadPool.h" // Тепер ми знаємо про пул
 
 class ClientHandler {
 private:
     SOCKET clientSocket;
     InvertedIndex& index;
+    ThreadPool& indexingPool; // Посилання на пул індексації (для статистики)
 
-    // Допоміжні методи для відправки чисел
     void sendInt(int value);
     void sendString(const std::string& str);
 
 public:
-    ClientHandler(SOCKET socket, InvertedIndex& idx);
+    // Оновили конструктор
+    ClientHandler(SOCKET socket, InvertedIndex& idx, ThreadPool& iPool);
     void handle();
 };

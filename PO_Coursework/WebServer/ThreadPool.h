@@ -20,4 +20,5 @@ public:
     ThreadPool(size_t threads_count);
     ~ThreadPool();
     void enqueue(std::function<void()> task);
+    size_t getQueueSize();
 };

@@ -42,3 +42,8 @@ void ThreadPool::enqueue(std::function<void()> task) {
     }
     condition.notify_one();
 }
+
+size_t ThreadPool::getQueueSize() {
+    std::unique_lock<std::mutex> lock(queue_mutex);
+    return tasks.size();
+}

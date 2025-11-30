@@ -2,9 +2,8 @@
 #include "ClientHandler.h"
 #include <iostream>
 
-ClientHandler::ClientHandler(SOCKET socket, InvertedIndex& idx)
-    : clientSocket(socket), index(idx) {
-}
+ClientHandler::ClientHandler(SOCKET socket, InvertedIndex& idx, ThreadPool& iPool)
+    : clientSocket(socket), index(idx), indexingPool(iPool) {}
 
 void ClientHandler::sendInt(int value) {
     // Відправляємо int як 4 байти
@@ -40,9 +39,14 @@ void ClientHandler::handle() {
 
         std::string searchWord(buffer.data());
 
-        int filesDone = index.getFilesCount();
-        std::cout << "[SERVER] Client requested search for: " << searchWord << "' "
-            << "(Files indexed so far: " << filesDone << ")\n";
+        // === ОНОВЛЕНИЙ ВИВІД СТАТИСТИКИ ===
+        int processed = index.getFilesCount();
+        size_t inQueue = indexingPool.getQueueSize(); // Питаємо у пула
+
+        std::cout << "[SERVER] Search: '" << searchWord << "' | "
+            << "Processed: " << processed << " | "
+            << "Queue: " << inQueue << "\n";
+        // ==================================
 
         // 4. Виконуємо пошук
         // Використовуємо наш метод очистки, щоб формат співпадав з індексом
@@ -73,6 +77,8 @@ void ClientHandler::handle() {
         uint8_t status = RESP_ERROR;
         send(clientSocket, (char*)&status, sizeof(status), 0);
     }
+
+    std::cout << "[SERVER] << Client disconnected.\n";
 
     // Закриваємо з'єднання після обробки (для простого протоколу це ок)
     closesocket(clientSocket);
