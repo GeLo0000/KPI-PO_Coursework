@@ -1,14 +1,20 @@
-// ClientHandler.h
 #pragma once
-// #include <winsock2.h> // Поки закоментуємо, підключимо пізніше
+#include <winsock2.h>
+#include <vector>
+#include <string>
 #include "InvertedIndex.h"
+#include "Protocol.h" // Наш протокол
 
 class ClientHandler {
 private:
-    // SOCKET clientSocket; 
+    SOCKET clientSocket;
     InvertedIndex& index;
 
+    // Допоміжні методи для відправки чисел
+    void sendInt(int value);
+    void sendString(const std::string& str);
+
 public:
-    ClientHandler(InvertedIndex& idx); // Тут буде socket в конструкторі
-    void handle(); // Основний цикл обробки клієнта
+    ClientHandler(SOCKET socket, InvertedIndex& idx);
+    void handle();
 };

@@ -10,6 +10,10 @@
 class InvertedIndex {
 private:
     std::map<std::string, std::set<std::string>> index;
+
+    // НОВЕ: Зберігаємо унікальні імена файлів
+    std::set<std::string> processedFiles;
+
     mutable std::shared_mutex mtx;
 
 public:
@@ -17,6 +21,8 @@ public:
     std::vector<std::string> search(const std::string& word) const;
     size_t getSize() const;
 
-    // Статичний метод-помічник для очистки слів (щоб був доступний всім)
+    // НОВЕ: Метод, щоб дізнатися кількість проіндексованих файлів
+    int getFilesCount() const;
+
     static std::string cleanWord(const std::string& word);
 };

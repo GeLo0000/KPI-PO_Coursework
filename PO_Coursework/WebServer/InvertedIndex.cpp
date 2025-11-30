@@ -4,6 +4,9 @@
 void InvertedIndex::add(const std::string& word, const std::string& filename) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     index[word].insert(filename);
+
+    // НОВЕ: Додаємо назву файлу в список оброблених
+    processedFiles.insert(filename);
 }
 
 std::vector<std::string> InvertedIndex::search(const std::string& word) const {
@@ -21,6 +24,12 @@ std::vector<std::string> InvertedIndex::search(const std::string& word) const {
 size_t InvertedIndex::getSize() const {
     std::shared_lock<std::shared_mutex> lock(mtx);
     return index.size();
+}
+
+// НОВЕ: Реалізація лічильника
+int InvertedIndex::getFilesCount() const {
+    std::shared_lock<std::shared_mutex> lock(mtx);
+    return processedFiles.size();
 }
 
 std::string InvertedIndex::cleanWord(const std::string& word) {
