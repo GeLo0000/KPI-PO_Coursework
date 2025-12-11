@@ -5,10 +5,10 @@
 #include "WebServer.h"
 
 int main() {
-    // 1. Initialize shared resources
+    // Initialize shared resources
     InvertedIndex index;
 
-    // 2. Create Thread Pools
+    // Create Thread Pools
 
     // Pool for heavy indexing tasks
     size_t indexing_threads = 20;
@@ -22,11 +22,11 @@ int main() {
     std::cout << "- Indexing Pool: " << indexing_threads << " threads\n";
     std::cout << "- Client Pool:   " << client_threads << " threads\n";
 
-    // 3. Start Background Indexer (non-blocking)
+    // Start Background Indexer (non-blocking)
     Indexer indexer(index, indexing_pool, "data");
     indexer.Start();
 
-    // 4. Start Web Server (blocking)
+    // Start Web Server (blocking)
     WebServer server(8080, index, client_pool, indexing_pool);
     server.Start();
 

@@ -16,8 +16,8 @@ ThreadPool::ThreadPool(size_t num_threads) : stop_(false) {
                         return this->stop_ || !this->tasks_.empty();
                         });
 
-                    // Exit the thread if stopped and queue is empty
-                    if (this->stop_ && this->tasks_.empty()) {
+                    // Exit the thread if stopped
+                    if (this->stop_) {
                         return;
                     }
 

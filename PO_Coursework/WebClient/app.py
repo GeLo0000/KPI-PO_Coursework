@@ -27,7 +27,6 @@ def query_cpp_server(word):
     """
     try:
         # Create TCP socket
-        # FIX: Removed the extra .socket in the second argument
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(2.0) # Timeout to prevent hanging
             s.connect((CPP_HOST, CPP_PORT))

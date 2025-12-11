@@ -95,9 +95,6 @@ int main() {
             }
             else if (status == kRespEmpty) {
                 std::cout << ">>> Word NOT found.\n";
-                // Read dummy counter to clear socket buffer
-                int dummy;
-                RecvAll(client_socket, (char*)&dummy, sizeof(dummy));
             }
             else {
                 std::cout << ">>> Server Error.\n";

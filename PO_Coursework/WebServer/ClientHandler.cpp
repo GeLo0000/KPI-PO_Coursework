@@ -70,9 +70,6 @@ void ClientHandler::Handle() {
         if (results.empty()) {
             uint8_t status = kRespEmpty;
             send(client_socket_, (char*)&status, sizeof(status), 0);
-
-            int count = 0;
-            SendInt(count);
         }
         else {
             uint8_t status = kRespOk;

@@ -34,9 +34,9 @@ void Indexer::Stop() {
 }
 
 void Indexer::IndexingLoop() {
+    int found_new = 0;
     while (running_) {
         try {
-            bool found_new = false;
 
             // Iterate over the directory
             for (const auto& entry : fs::directory_iterator(directory_path_)) {
@@ -51,19 +51,19 @@ void Indexer::IndexingLoop() {
                         // Submit task to thread pool
                         std::string path = entry.path().string();
 
-                        // Note: We use Enqueue instead of enqueue
                         pool_.Enqueue([this, path, filename]() {
                             this->ProcessFile(path, filename);
                             });
 
-                        std::cout << "[SCHEDULER] Found new file: " << filename << "\n";
-                        found_new = true;
+                        //std::cout << "[SCHEDULER] Found new file: " << filename << "\n";
+                        found_new++;
                     }
                 }
             }
 
-            if (found_new) {
-                std::cout << "[SCHEDULER] New tasks submitted to ThreadPool.\n";
+            if (found_new > 0) {
+                std::cout << "[SCHEDULER] New '" << found_new << "' files submitted to ThreadPool.\n";
+                found_new = 0;
             }
 
         }
@@ -85,10 +85,9 @@ void Indexer::ProcessFile(const std::string& filepath, const std::string& filena
 
     std::string word;
     while (file >> word) {
-        // Use static method CleanWord (PascalCase)
+        // Use static method CleanWord
         std::string processed = InvertedIndex::CleanWord(word);
         if (!processed.empty()) {
-            // Use Add (PascalCase)
             index_.Add(processed, filename);
         }
     }
